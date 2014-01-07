@@ -48,6 +48,23 @@ class Ship
     @length = length
   end
 
+  # Generate ship coordinates
+  def gen_coordinates
+      @x_coords = []
+      @y_coords = []
+    if @heading == "h"
+      1.upto(@length - 1) do
+        @x_coords << column(@position)
+        @y_coords << row(@position)
+      end
+    else
+      1.upto(@length - 1) do
+        @x_coords << column(@position)
+        @y_coords << row(@position)
+      end
+
+    end
+  end
 end
 
 class Fleet
