@@ -41,11 +41,11 @@ class OpponentBoard
 end
 
 class Ship
-  attr_accessor :position, :size
-  def initialize(position, heading, size)
+  attr_accessor :position, :heading, :length
+  def initialize(length, position = "", heading = "")
     @position = position
-    @heading
-    @size = size
+    @heading = heading
+    @length = length
   end
 
 end
@@ -53,13 +53,13 @@ end
 class Fleet
   attr_accessor :aircraft_carrier, :battleship, :cruiser, :destroyer_1, :destroyer_2, :submarine_1, :submarine_2
   def initialize
-    @aircraft_carrier = Ship.new("#","#", 5)
-    @battleship = Ship.new("#","#", 4)
-    @cruiser = Ship.new("#","#", 3)
-    @destroyer_1 = Ship.new("#","#", 2)
-    @destroyer_2 = Ship.new("#","#", 2)
-    @submarine_1 = Ship.new("#","#", 1)
-    @submarine_2 = Ship.new("#","#", 1)
+    @aircraft_carrier = Ship.new(5)
+    @battleship = Ship.new(4)
+    @cruiser = Ship.new(3)
+    @destroyer_1 = Ship.new(2)
+    @destroyer_2 = Ship.new(2)
+    @submarine_1 = Ship.new(1)
+    @submarine_2 = Ship.new(1)
   end
 end
 
@@ -73,22 +73,14 @@ def row(ln_combo)
   number = ln_combo.split('').last.to_i
 end
 
+# Check to see if ship has a valid position
 def check_position(ship)
-  if ship.heading == "h"
-    if column(ship.position) > 10 - (ship.length + 1)
-      puts "Not a valid position"
-      return false
-    else
-      return true
-    end
-  else
-    if row(ship.position) > 10 - (ship.length + 1)
-      puts "Not a valid position"
-      return false
-    else
-      return true
-    end
+  boundary = 11 - ship.length
+  if ship.heading == "h" && (column(ship.position) > boundary || row(ship.position) > boundary)
+    puts "Not a valid position"
+    false
   end
+  true
 end
 
 
@@ -118,27 +110,29 @@ puts <<-eos
 eos
 
 puts "Enter the position of your Aircraft carrier (length 5)"
-human_fleet.aircraft_carrier.position = gets
+human_fleet.aircraft_carrier.position = gets.chomp
 
 puts "Enter the heading of your Aircraft carrier (h or v)"
-human_fleet.aircraft_carrier.heading = gets
+human_fleet.aircraft_carrier.heading = gets.chomp
 
-puts "Enter the position of your Battleship (length 4)"
-human_fleet.battleship.heading = gets
+check_position(human_fleet.aircraft_carrier)
 
-puts "Enter the position of your Battleship (length 4)"
-human_fleet.battleship.heading = gets
+# puts "Enter the position of your Battleship (length 4)"
+# human_fleet.battleship.heading = gets
+
+# puts "Enter the position of your Battleship (length 4)"
+# human_fleet.battleship.heading = gets
 
 
-puts "Enter the position of your cruiser (length 3)"
+# puts "Enter the position of your cruiser (length 3)"
 
-puts "Enter the position of your first Destroyer (length 2)"
+# puts "Enter the position of your first Destroyer (length 2)"
 
-puts "Enter position of your second Destroyer (length 2)"
+# puts "Enter position of your second Destroyer (length 2)"
 
-puts "Enter position of your first Submarine (length 1)"
+# puts "Enter position of your first Submarine (length 1)"
 
-puts "Enter position of your second Submarine (length 1)"
+# puts "Enter position of your second Submarine (length 1)"
 
 
 
