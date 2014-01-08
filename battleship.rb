@@ -8,22 +8,33 @@ class PlayerBoard
 
   end
 
-  private
 
   def generate_board
-    board = Array.new(10,Array.new(10,"-"))
-    @fleet.each do |ship|
-      board[row(ship.position)][column(ship.position)] = "X"
-      if ship.position.heading == "h"
-        1.upto(ship.length - 1) do |i|
-          board[row(ship.position)][column(ship.position) + i]
-        end
-      else
-        1.upto(ship.length - 1) do |i|
-          board[row(ship.position) + i][column(ship.position)]
+    # board = Array.new(10,Array.new(10,"-"))
+    board = []
+    10.times do
+      board << ["-","-","-","-","-","-","-","-","-","-"]
+    end
+    @fleet.ships.each do |ship|
+      # p ship
+      if ship.position != (nil || "")
+        p ship.position
+        p board[row(ship.position) - 1][column(ship.position) - 1] = "X"
+        if ship.heading == "h"
+          1.upto(ship.length - 1) do |i|
+            p i
+            board[row(ship.position) - 1][column(ship.position) - 1+ i] = "X"
+          end
+        elsif ship.heading == "v"
+          1.upto(ship.length - 1) do |i|
+            p i
+            board[row(ship.position) - 1 + i][column(ship.position) - 1] = "X"
+          end
         end
       end
+
     end
+     p board
   end
 
 end
@@ -47,6 +58,7 @@ class Ship
     @length = length
     @position = position
     @heading = heading
+    @combined_coords = []
   end
 
   # Generate ship coordinates
@@ -73,11 +85,11 @@ class Ship
   # Check to see if ship is in valid board position
   def check_position
     boundary = 11 - @length
-    if @heading == "h" && (column(@position) > boundary || row(@position) > boundary)
-      puts "Not a valid position"
+    if ((@heading == "h" && column(@position) > boundary) || (@heading == "v" && row(@position) > boundary)) || (column(@position) > 10 || row(@position) > 10)
       false
+    else
+      true
     end
-    true
   end
 end
 
@@ -86,7 +98,7 @@ end
 
 class Fleet
   attr_accessor :aircraft_carrier, :battleship, :cruiser, :destroyer_1, :destroyer_2, :submarine_1, :submarine_2
-  attr_reader :filled_coords
+  attr_reader :filled_coords, :ships
   def initialize
     @aircraft_carrier = Ship.new(5)
     @battleship = Ship.new(4)
@@ -100,12 +112,19 @@ class Fleet
   end
 
   def add_to_fleet_coords(ship)
+    ship.gen_coordinates
     @filled_coords.concat(ship.combined_coords)
   end
 
   # Returns false if there is collision detected
   def check_coords(ship)
-    (ship.combined_coords & @filled_coords).empty?
+    p ship.combined_coords
+    p @filled_coords
+    if !(ship.combined_coords & @filled_coords).empty?
+      false
+    else
+      true
+    end
   end
 end
 
@@ -114,7 +133,7 @@ end
 
 def column(ln_combo)
   letter_numbers = {"a" => 1, "b" => 2, "c" => 3, "d" => 4, "e" => 5, "f" => 6, "g" => 7, "h" => 8, "i" => 9, "j" => 10}
-  letter = ln_combo.split('').first.downcase
+  letter = ln_combo.split('').first.to_s.downcase
   number_of_letter = letter_numbers[letter]
 end
 
@@ -129,21 +148,40 @@ def ship_input_prompt(ship, name)
   ship.heading = gets.chomp
 end
 
-def get_ship(ship, name)
+def get_ship(fleet, ship, name)
   ship_input_prompt(ship, name)
-  # p ship.check_position
+
+  # Check to see if ship is in bounds
   begin
-    if !ship.check_position
-      raise ArgumentError, "Ship is out of bounds, choose new location"
-    end
-    rescue
-      ship_input_prompt(ship, name)
+    raise "Ship is out of bounds, choose new location" if !ship.check_position
+  rescue Exception => ex
+    p ex.message
+    ship_input_prompt(ship, name)
   end
+
+  ship.gen_coordinates
+
+  # Check to see if ship is overlapping another
+  begin
+    raise "Ship cannot overlap with existing ship, choose new location" if !fleet.check_coords(ship)
+  rescue Exception => ex
+    p ex.message
+    ship_input_prompt(ship, name)
+  end
+  fleet.add_to_fleet_coords(ship)
 end
 
+
+
+
 def get_user_input(fleet)
-  get_ship(fleet.aircraft_carrier, "Aircraft Carrier")
-  get_ship(fleet.battleship, "Battleship")
+  get_ship(fleet, fleet.aircraft_carrier, "Aircraft Carrier")
+  get_ship(fleet, fleet.battleship, "Battleship")
+  get_ship(fleet, fleet.cruiser, "Cruiser")
+  get_ship(fleet, fleet.destroyer_1, "Destroyer 1")
+  get_ship(fleet, fleet.destroyer_2, "Destroyer 2")
+  get_ship(fleet, fleet.submarine_1, "Submarine 1")
+  get_ship(fleet, fleet.submarine_2, "Submarine 2")
 end
 
 # Check to see if ship has a valid position
@@ -176,6 +214,9 @@ puts <<-eos
 eos
 
 get_user_input(human_fleet)
+
+human_board = PlayerBoard.new(human_fleet)
+human_board.generate_board
 # puts "Enter the position of your Aircraft carrier (length 5)"
 # human_fleet.aircraft_carrier.position = 'B2' #gets.chomp
 
