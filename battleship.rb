@@ -24,9 +24,11 @@ end
 
 
 class PlayerBoard
+  attr_accessor :board
 
   def initialize(fleet)
     @fleet = fleet
+    @board = []
   end
 
   def display
@@ -35,10 +37,8 @@ class PlayerBoard
 
 
   def generate_board(message)
-    # board = Array.new(10,Array.new(10,"-"))
-    board = []
     10.times do
-      board << ["-","-","-","-","-","-","-","-","-","-"]
+      @board << ["-","-","-","-","-","-","-","-","-","-"]
     end
     name_key = {5 => "A", 4=> "B", 3=> "C", 2=> "D", 1=> "S"}
     @fleet.ships.each do |ship|
@@ -57,6 +57,7 @@ class PlayerBoard
       end
 
     end
+    @board = board
     display_board(board, message)
   end
 
@@ -66,37 +67,33 @@ end
 
 class OpponentBoard
 
-  def initialize
+  def initialize(enemy_board)
+    @enemy_board = enemy_board
+    @board = []
+    @hits = []
+    @misses = []
   end
 
   def display
   end
 
-  def shoot
+  def shoot(coords)
+    conv_coords = "#{row(coords)}#{column(coords)}"
+    @enemy_board.fleet.ship.each do |ship|
+      if @enemy_board.fleet.ship.combined_coords.include?(conv_coords)
+        ship.hits += 1
+        @hits << conv_coords
+        if ship.hits == ship.length
+          p "You sunk a ship!"
+        end
+      end
+    end
   end
 
   def generate_board
-    # board = Array.new(10,Array.new(10,"-"))
-    board = []
     10.times do
-      board << ["-","-","-","-","-","-","-","-","-","-"]
+      @board << ["-","-","-","-","-","-","-","-","-","-"]
     end
-    @fleet.ships.each do |ship|
-      if ship.position != (nil || "")
-        board[row(ship.position) - 1][column(ship.position) - 1] = "X"
-        if ship.heading == "h"
-          1.upto(ship.length - 1) do |i|
-            board[row(ship.position) - 1][column(ship.position) - 1+ i] = "X"
-          end
-        elsif ship.heading == "v"
-          1.upto(ship.length - 1) do |i|
-            board[row(ship.position) - 1 + i][column(ship.position) - 1] = "X"
-          end
-        end
-      end
-
-    end
-     p board
   end
 end
 
@@ -108,6 +105,7 @@ class Ship
     @position = position
     @heading = heading
     @combined_coords = []
+    @hits = 0
   end
 
   # Generate ship coordinates
@@ -243,8 +241,16 @@ end
 
 #=================START GAME================
 
-def shoot(coordinate)
-
+def shoot(coordinate, player_target_board, enemy_board)
+  coordinates = "#{row(coordinate)}#{column(coordinate)}"
+  enemy_board.fleet.ship.each do |ship|
+    if enemy_board.fleet.ship.combined_coords.include?(coordinates)
+      ship.hits += 1
+      if ship.hits == ship.length
+        p "You sunk a ship!"
+      end
+    end
+  end
 end
 
 
@@ -272,4 +278,5 @@ human_board = PlayerBoard.new(human_fleet)
 human_board.generate_board("Your Board")
 computer_board = PlayerBoard.new(computer_fleet)
 computer_board.generate_board("Computer Board")
-
+human_view = OpponentBoard.new(computer_board)
+human_view.shoot("B2")
