@@ -59,7 +59,7 @@ class PlayerBoard
     display_board(board, message)
   end
 
-  def update_board(coord_of_hit)
+  def update(coord_of_hit)
     # p coord_of_hit
     @board[row(coord_of_hit) - 1][column(coord_of_hit) - 1] = "X"
     display_board(@board)
@@ -89,10 +89,13 @@ class PlayerScreen
         p "You got hit!"
         ship.hits += 1
         @hits << conv_coords
-        self.update(coords)
+        @enemy_board.update(coords)
         if ship.hits == ship.length
           p "You sunk a ship!"
         end
+        self.update(true, coords)
+      else
+        self.update(false, coords)
       end
     end
   end
@@ -103,11 +106,13 @@ class PlayerScreen
     end
   end
 
-  def update(coords)
-    if
-      p coords.to_s
-      p @board[row(coords) - 1][column(coords) - 1] = "X"
+  def update(hit, coords)
+    if hit
+      letter = "X"
+    else
+      letter = "O"
     end
+     @board[row(coords) - 1][column(coords) - 1] = letter
   end
 end
 
@@ -275,6 +280,8 @@ def battle(computer_board, computer_screen, human_board, human_screen)
     human_shoot(human_screen)
     human_screen.display
     human_board.display
+    puts "Press Enter to have the computer fire"
+    junk = gets
     computer_shoot(computer_screen)
     puts "Computer has fired"
     human_screen.display
