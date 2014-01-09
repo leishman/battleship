@@ -24,7 +24,7 @@ end
 
 
 class PlayerBoard
-  attr_accessor :board
+  attr_accessor :board, :fleet
 
   def initialize(fleet)
     @fleet = fleet
@@ -79,8 +79,11 @@ class OpponentBoard
 
   def shoot(coords)
     conv_coords = "#{row(coords)}#{column(coords)}"
-    @enemy_board.fleet.ship.each do |ship|
-      if @enemy_board.fleet.ship.combined_coords.include?(conv_coords)
+    p conv_coords
+    @enemy_board.fleet.ships.each do |ship|
+      p ship.combined_coords
+      if ship.combined_coords.include?(conv_coords)
+        p "You got hit!"
         ship.hits += 1
         @hits << conv_coords
         if ship.hits == ship.length
@@ -98,7 +101,7 @@ class OpponentBoard
 end
 
 class Ship
-  attr_accessor :position, :heading, :length
+  attr_accessor :position, :heading, :length, :hits
   attr_reader :x_coords, :y_coords, :combined_coords
   def initialize(length, position = "", heading = "")
     @length = length
@@ -125,7 +128,7 @@ class Ship
       end
     end
     @x_coords.each_with_index do |x, i|
-      @combined_coords[i] = "#{x}#{@y_coords[i]}"
+      @combined_coords[i] = "#{@y_coords[i]}#{x}"
     end
   end
 
@@ -276,7 +279,15 @@ random_get_user_input(computer_fleet)
 
 human_board = PlayerBoard.new(human_fleet)
 human_board.generate_board("Your Board")
+
 computer_board = PlayerBoard.new(computer_fleet)
 computer_board.generate_board("Computer Board")
+
+
 human_view = OpponentBoard.new(computer_board)
-human_view.shoot("B2")
+computer_view = OpponentBoard.new(human_board)
+
+# Let the battle begin
+puts "Take a shot:"
+coord = gets.chomp
+human_view.shoot(coord)
