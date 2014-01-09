@@ -1,5 +1,5 @@
 # Pass in 10x10 matrix of inputs and display symbols in sweet grid
-def display_board(matrix, message)
+def display_board(matrix, message = "")
 
   puts message
 
@@ -21,8 +21,6 @@ end
 
 
 
-
-
 class PlayerBoard
   attr_accessor :board, :fleet
 
@@ -32,7 +30,7 @@ class PlayerBoard
   end
 
   def display
-
+    display_board(@board)
   end
 
 
@@ -61,11 +59,15 @@ class PlayerBoard
     display_board(board, message)
   end
 
+  def update_board(coord_of_hit)
+    # p coord_of_hit
+    @board[row(coord_of_hit) - 1][column(coord_of_hit) - 1] = "X"
+    display_board(@board)
+  end
+
 end
 
-
-
-class OpponentBoard
+class PlayerScreen
 
   def initialize(enemy_board)
     @enemy_board = enemy_board
@@ -75,17 +77,19 @@ class OpponentBoard
   end
 
   def display
+    display_board(@board)
   end
 
   def shoot(coords)
-    conv_coords = "#{row(coords)}#{column(coords)}"
-    p conv_coords
+    conv_coords = "#{column(coords)}#{row(coords)}"
+    # p conv_coords
     @enemy_board.fleet.ships.each do |ship|
-      p ship.combined_coords
+      # p ship.combined_coords
       if ship.combined_coords.include?(conv_coords)
         p "You got hit!"
         ship.hits += 1
         @hits << conv_coords
+        self.update(coords)
         if ship.hits == ship.length
           p "You sunk a ship!"
         end
@@ -93,9 +97,16 @@ class OpponentBoard
     end
   end
 
-  def generate_board
+  def generate
     10.times do
       @board << ["-","-","-","-","-","-","-","-","-","-"]
+    end
+  end
+
+  def update(coords)
+    if
+      p coords.to_s
+      p @board[row(coords) - 1][column(coords) - 1] = "X"
     end
   end
 end
@@ -128,7 +139,7 @@ class Ship
       end
     end
     @x_coords.each_with_index do |x, i|
-      @combined_coords[i] = "#{@y_coords[i]}#{x}"
+      @combined_coords[i] = "#{x}#{@y_coords[i]}"
     end
   end
 
@@ -218,11 +229,14 @@ def get_user_input(fleet)
 end
 
 #============GENERATE COMPUTER INPUT==============
+def random_coords
+  letters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+  "#{letters.sample}#{rand(9)+1}"
+end
 
 def random_ship_input_prompt(ship)
-  y = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
   heading = ["h", "v"]
-  ship.position = "#{y.sample}#{rand(9)+1}"
+  ship.position = random_coords()
   ship.heading = heading.sample
 end
 
@@ -242,21 +256,34 @@ def random_get_user_input(fleet)
   end
 end
 
-#=================START GAME================
+#================BATTLE LOGIC======================
 
-def shoot(coordinate, player_target_board, enemy_board)
-  coordinates = "#{row(coordinate)}#{column(coordinate)}"
-  enemy_board.fleet.ship.each do |ship|
-    if enemy_board.fleet.ship.combined_coords.include?(coordinates)
-      ship.hits += 1
-      if ship.hits == ship.length
-        p "You sunk a ship!"
-      end
-    end
+def human_shoot(human_screen)
+  puts "Enter coordinates of shot:"
+  coords = gets.chomp
+  human_screen.shoot(coords)
+end
+
+def computer_shoot(computer_screen)
+  # Remove the randomness later
+  computer_screen.shoot(random_coords)
+end
+
+def battle(computer_board, computer_screen, human_board, human_screen)
+  winner = false
+  while !winner
+    human_shoot(human_screen)
+    human_screen.display
+    human_board.display
+    computer_shoot(computer_screen)
+    puts "Computer has fired"
+    human_screen.display
+    human_board.display
   end
 end
 
 
+#=================START GAME================
 
 human_fleet = Fleet.new()
 computer_fleet = Fleet.new()
@@ -284,10 +311,14 @@ computer_board = PlayerBoard.new(computer_fleet)
 computer_board.generate_board("Computer Board")
 
 
-human_view = OpponentBoard.new(computer_board)
-computer_view = OpponentBoard.new(human_board)
+human_screen = PlayerScreen.new(computer_board)
+human_screen.generate
+computer_screen = PlayerScreen.new(human_board)
 
 # Let the battle begin
-puts "Take a shot:"
-coord = gets.chomp
-human_view.shoot(coord)
+# puts "Take a shot:"
+# coord = gets.chomp
+# human_screen.shoot(coord)
+
+
+battle(computer_board, computer_screen, human_board, human_screen)
