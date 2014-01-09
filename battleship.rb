@@ -1,3 +1,28 @@
+# Pass in 10x10 matrix of inputs and display symbols in sweet grid
+def display_board(matrix, message)
+
+  puts message
+
+  puts <<-eos
+         A   B   C   D   E   F   G   H   I   J
+      +---------------------------------------+
+    eos
+  matrix.each_with_index do |x, i|
+    puts <<-eos
+   #{i+1} #{" " if i != 9}| #{x[0]} | #{x[1]} | #{x[2]} | #{x[3]} | #{x[4]} | #{x[5]} | #{x[6]} | #{x[7]} | #{x[8]} | #{x[9]} |
+      |---|---|---|---|---|---|---|---|---|---|
+    eos
+  end
+
+puts <<-eos
+      +---------------------------------------+
+      eos
+end
+
+
+
+
+
 class PlayerBoard
 
   def initialize(fleet)
@@ -9,35 +34,35 @@ class PlayerBoard
   end
 
 
-  def generate_board
+  def generate_board(message)
     # board = Array.new(10,Array.new(10,"-"))
     board = []
     10.times do
       board << ["-","-","-","-","-","-","-","-","-","-"]
     end
+    name_key = {5 => "A", 4=> "B", 3=> "C", 2=> "D", 1=> "S"}
     @fleet.ships.each do |ship|
-      # p ship
+      letter = name_key[ship.length].split[0]
       if ship.position != (nil || "")
-        p ship.position
-        p board[row(ship.position) - 1][column(ship.position) - 1] = "X"
+        board[row(ship.position) - 1][column(ship.position) - 1] = letter
         if ship.heading == "h"
           1.upto(ship.length - 1) do |i|
-            p i
-            board[row(ship.position) - 1][column(ship.position) - 1+ i] = "X"
+            board[row(ship.position) - 1][column(ship.position) - 1+ i] = letter
           end
         elsif ship.heading == "v"
           1.upto(ship.length - 1) do |i|
-            p i
-            board[row(ship.position) - 1 + i][column(ship.position) - 1] = "X"
+            board[row(ship.position) - 1 + i][column(ship.position) - 1] = letter
           end
         end
       end
 
     end
-     p board
+    display_board(board, message)
   end
 
 end
+
+
 
 class OpponentBoard
 
@@ -48,6 +73,30 @@ class OpponentBoard
   end
 
   def shoot
+  end
+
+  def generate_board
+    # board = Array.new(10,Array.new(10,"-"))
+    board = []
+    10.times do
+      board << ["-","-","-","-","-","-","-","-","-","-"]
+    end
+    @fleet.ships.each do |ship|
+      if ship.position != (nil || "")
+        board[row(ship.position) - 1][column(ship.position) - 1] = "X"
+        if ship.heading == "h"
+          1.upto(ship.length - 1) do |i|
+            board[row(ship.position) - 1][column(ship.position) - 1+ i] = "X"
+          end
+        elsif ship.heading == "v"
+          1.upto(ship.length - 1) do |i|
+            board[row(ship.position) - 1 + i][column(ship.position) - 1] = "X"
+          end
+        end
+      end
+
+    end
+     p board
   end
 end
 
@@ -93,9 +142,6 @@ class Ship
   end
 end
 
-
-
-
 class Fleet
   attr_accessor :aircraft_carrier, :battleship, :cruiser, :destroyer_1, :destroyer_2, :submarine_1, :submarine_2
   attr_reader :filled_coords, :ships
@@ -118,8 +164,6 @@ class Fleet
 
   # Returns false if there is collision detected
   def check_coords(ship)
-    p ship.combined_coords
-    p @filled_coords
     if !(ship.combined_coords & @filled_coords).empty?
       false
     else
@@ -141,6 +185,8 @@ def row(ln_combo)
   number = ln_combo.split('').last.to_i
 end
 
+#=======================GET USER INPUT=============================
+
 def ship_input_prompt(ship, name)
   puts "Enter the position of your #{name} (length #{ship.length})"
   ship.position = gets.chomp
@@ -150,55 +196,61 @@ end
 
 def get_ship(fleet, ship, name)
   ship_input_prompt(ship, name)
-
-  # Check to see if ship is in bounds
-  begin
-    raise "Ship is out of bounds, choose new location" if !ship.check_position
-  rescue Exception => ex
-    p ex.message
-    ship_input_prompt(ship, name)
-  end
-
   ship.gen_coordinates
-
-  # Check to see if ship is overlapping another
-  begin
-    raise "Ship cannot overlap with existing ship, choose new location" if !fleet.check_coords(ship)
-  rescue Exception => ex
-    p ex.message
+  while !(ship.check_position && fleet.check_coords(ship))
+    p "Ship is out of bounds or collides with another ship, choose new location"
     ship_input_prompt(ship, name)
+    ship.gen_coordinates
   end
-  fleet.add_to_fleet_coords(ship)
+    fleet.add_to_fleet_coords(ship)
 end
-
-
 
 
 def get_user_input(fleet)
   get_ship(fleet, fleet.aircraft_carrier, "Aircraft Carrier")
   get_ship(fleet, fleet.battleship, "Battleship")
-  get_ship(fleet, fleet.cruiser, "Cruiser")
-  get_ship(fleet, fleet.destroyer_1, "Destroyer 1")
-  get_ship(fleet, fleet.destroyer_2, "Destroyer 2")
-  get_ship(fleet, fleet.submarine_1, "Submarine 1")
-  get_ship(fleet, fleet.submarine_2, "Submarine 2")
+  # get_ship(fleet, fleet.cruiser, "Cruiser")
+  # get_ship(fleet, fleet.destroyer_1, "Destroyer 1")
+  # get_ship(fleet, fleet.destroyer_2, "Destroyer 2")
+  # get_ship(fleet, fleet.submarine_1, "Submarine 1")
+  # get_ship(fleet, fleet.submarine_2, "Submarine 2")
 end
 
-# Check to see if ship has a valid position
+#============GENERATE COMPUTER INPUT==============
+
+def random_ship_input_prompt(ship)
+  y = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+  heading = ["h", "v"]
+  ship.position = "#{y.sample}#{rand(9)+1}"
+  ship.heading = heading.sample
+end
+
+def random_get_ship(ship, fleet)
+  random_ship_input_prompt(ship)
+  ship.gen_coordinates
+  while !(ship.check_position && fleet.check_coords(ship))
+    random_ship_input_prompt(ship)
+    ship.gen_coordinates
+  end
+    fleet.add_to_fleet_coords(ship)
+end
+
+def random_get_user_input(fleet)
+  fleet.ships.each do |ship|
+    random_get_ship(ship, fleet)
+  end
+end
+
+#=================START GAME================
+
+def shoot(coordinate)
+
+end
 
 
-
-# human_player_board = PlayerBoard.new()
-# human_opponent_board = OpponentBoard.new()
-
-# computer_player_board = PlayerBoard.new()
-# computer_opponent_board = OpponentBoard.new()
-
-
-# Returns the column number of a coordinate pair get_column_num("D2") #=> 4
 
 human_fleet = Fleet.new()
-
+computer_fleet = Fleet.new()
 
 puts "Welcome to Battleship"
 puts <<-eos
@@ -214,67 +266,10 @@ puts <<-eos
 eos
 
 get_user_input(human_fleet)
+random_get_user_input(computer_fleet)
 
 human_board = PlayerBoard.new(human_fleet)
-human_board.generate_board
-# puts "Enter the position of your Aircraft carrier (length 5)"
-# human_fleet.aircraft_carrier.position = 'B2' #gets.chomp
+human_board.generate_board("Your Board")
+computer_board = PlayerBoard.new(computer_fleet)
+computer_board.generate_board("Computer Board")
 
-# puts "Enter the heading of your Aircraft carrier (h or v)"
-# human_fleet.aircraft_carrier.heading = 'h' #gets.chomp
-
-# human_fleet.aircraft_carrier.check_position
-
-# human_fleet.aircraft_carrier.gen_coordinates
-# human_fleet.add_to_fleet_coords(human_fleet.aircraft_carrier)
-
-# p human_fleet.aircraft_carrier.y_coords
-# p human_fleet.aircraft_carrier.x_coords
-
-
-
-# puts "Enter the position of your Battleship (length 4)"
-# human_fleet.battleship.position = 'B2' #gets.chomp
-
-# puts "Enter the position of your Battleship (length 4)"
-# human_fleet.battleship.heading = 'v' #gets.chomp
-
-# human_fleet.battleship.check_position
-# human_fleet.battleship.gen_coordinates
-
-# if !human_fleet.check_coords(human_fleet.battleship)
-#   puts "Ship overlaps position, please enter new location"
-# end
-
-
-# human_fleet.add_to_fleet_coords(human_fleet.battleship)
-
-# p human_fleet.filled_coords
-# p human_fleet.aircraft_carrier
-
-# human_fleet.add_to_fleet_coords(human_fleet.battleship)
-
-# puts "Enter the position of your cruiser (length 3)"
-
-# puts "Enter the position of your first Destroyer (length 2)"
-
-# puts "Enter position of your second Destroyer (length 2)"
-
-# puts "Enter position of your first Submarine (length 1)"
-
-# puts "Enter position of your second Submarine (length 1)"
-
-
-
-# a = Array.new(10,Array.new(10,"X"))
-
-# def print_matrix(matrix)
-#   matrix.each{ |x| p x }
-# end
-
-# #### TESTS ###
-
-# p "## TESTS ##"
-# p column("D2") == 4
-# p row("D2") == 2
-# ship = Ship.new("B2", "h")
