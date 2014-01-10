@@ -3,12 +3,11 @@ def clear_screen!
   print "\e[2J"
 end
 
-def display_board(matrix, message = "")
-  # clear_screen!
-  puts message
+def display_board(matrix, message = [])
+  message.each{ |m| puts m }
 
   puts <<-eos
-         A   B   C   D   E   F   G   H   I   J
+        A   B   C   D   E   F   G   H   I   J
       +---------------------------------------+
       eos
   matrix.each_with_index do |x, i|
@@ -19,7 +18,7 @@ def display_board(matrix, message = "")
   end
 
   puts <<-eos
-        +---------------------------------------+
+      +---------------------------------------+
         eos
 end
 

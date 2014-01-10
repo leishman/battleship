@@ -1,3 +1,4 @@
+require 'pry'
 require_relative 'battleship_utils.rb'
 
 class PlayerBoard
@@ -53,38 +54,45 @@ class PlayerScreen
     @board = []
     @hits = []
     @misses = []
+    @message = []
   end
 
+  # Display the Screen
   def display
-    display_board(@board)
+    system("clear")
+    display_board(@board, @message)
+    @message.clear
   end
 
+  # Shoot the coordinates of the enemy board
   def shoot(coords)
+    hit = false
     conv_coords = "#{column(coords)}#{row(coords)}"
-    # p conv_coords
     @enemy_board.fleet.ships.each do |ship|
-      # p ship.combined_coords
       if ship.combined_coords.include?(conv_coords)
-        p "You got hit!"
+        @message << ["You got a hit!!"]
         ship.hits += 1
         @hits << conv_coords
         @enemy_board.update(coords)
         if ship.hits == ship.length
-          p "You sunk a ship!"
+          @message << ["You sunk a ship!"]
         end
-        self.update(true, coords)
-      else
-        self.update(false, coords)
+        hit = true
+        break
       end
     end
+    @message << ["You missed...womp, womp"] if !hit
+    self.update(hit, coords)
   end
 
+  # Generate the screen
   def generate
     10.times do
       @board << Array.new(10,"-")
     end
   end
 
+  # Update the screen with hitss (X) and misses (O)
   def update(hit, coords)
     if hit
       letter = "X"
